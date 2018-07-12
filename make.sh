@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
 
 CUDA_PATH=/usr/local/cuda/
-
+export CXXFLAGS="-std=c++11"
+export CFLAGS="-std=c99"
 export PATH=$CUDA_PATH/bin:$PATH
-
-python setup.py build_ext --inplace
-rm -rf build
 
 CUDA_ARCH="-gencode arch=compute_52,code=sm_52 -arch=sm_52"
 
