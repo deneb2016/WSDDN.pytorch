@@ -40,14 +40,14 @@ class WSDDN_VGG16(nn.Module):
         normal_init(self.fc8c, 0, 0.01, False)
         normal_init(self.fc8d, 0, 0.01, False)
 
-    def forward(self, im_data, rois, scores=None, image_level_label=None):
+    def forward(self, im_data, rois, prop_scores=None, image_level_label=None):
         N = rois.size(0)
         feature_map = self.base(im_data)
         zero_padded_rois = torch.cat([torch.zeros(N, 1).to(rois), rois], 1)
         pooled_feat = self.roi_pooling(feature_map, zero_padded_rois).view(N, -1)
 
-        if scores is not None:
-            pooled_feat = pooled_feat * (scores.view(N, 1) * 10 + 1)
+        if prop_scores is not None:
+            pooled_feat = pooled_feat * (prop_scores.view(N, 1) * 10 + 1)
 
         fc7 = self.top(pooled_feat)
         fc8c = self.fc8c(fc7)
@@ -62,6 +62,7 @@ class WSDDN_VGG16(nn.Module):
             return scores
 
         image_level_scores = torch.sum(scores, 0)
+        #print(image_level_scores, image_level_label)
         loss = F.binary_cross_entropy(image_level_scores, image_level_label.to(torch.float32))
         reg = self.spatial_regulariser(rois, fc7, scores, image_level_label)
 

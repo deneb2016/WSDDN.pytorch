@@ -20,7 +20,6 @@ def parse_args():
     parser.add_argument('--epochs', dest='max_epochs', help='number of epochs', default=20, type=int)
     parser.add_argument('--disp_interval', help='number of iterations to display loss', default=1000, type=int)
     parser.add_argument('--save_interval', dest='save_interval', help='number of epochs to save', default=1, type=int)
-    parser.add_argument('--nw', help='number of worker to load data', default=0, type=int)
     parser.add_argument('--multiscale', action='store_true')
     parser.add_argument('--save_dir', help='directory to save models', default="../repo/wsddn")
     parser.add_argument('--data_dir', help='directory to load data', default='./data', type=str)
@@ -59,10 +58,10 @@ def train():
     print('Called with args:')
     print(args)
 
-    np.random.seed(1)
-    torch.manual_seed(1)
+    np.random.seed(3)
+    torch.manual_seed(4)
     if torch.cuda.is_available():
-        torch.cuda.manual_seed(1)
+        torch.cuda.manual_seed(5)
         device = torch.device('cuda')
     else:
         device = torch.device('cpu')
