@@ -22,7 +22,7 @@ class WSDDNDataset(data.Dataset):
                 raise Exception('Undefined dataset %s' % name)
 
     def __getitem__(self, index):
-        im, gt_boxes, gt_categories, proposals, id, loader_index = self.get_raw_data(index)
+        im, gt_boxes, gt_categories, proposals, prop_scores, id, loader_index = self.get_raw_data(index)
         raw_img = im.copy()
 
         # rgb -> bgr
@@ -68,12 +68,13 @@ class WSDDNDataset(data.Dataset):
         data = data.permute(2, 0, 1).contiguous()
         gt_boxes = torch.tensor(gt_boxes, dtype=torch.float32)
         proposals = torch.tensor(proposals, dtype=torch.float32)
+        prop_scores = torch.tensor(prop_scores, dtype=torch.float32)
         gt_categories = torch.tensor(gt_categories, dtype=torch.long)
 
         image_level_label = torch.zeros(self.num_classes, dtype=torch.uint8)
         for label in gt_categories:
             image_level_label[label] = 1
-        return data, gt_boxes, gt_categories, proposals, image_level_label, im_scale, raw_img, id
+        return data, gt_boxes, gt_categories, proposals, prop_scores, image_level_label, im_scale, raw_img, id
 
     def get_raw_data(self, index):
         here = None
@@ -99,8 +100,9 @@ class WSDDNDataset(data.Dataset):
         gt_boxes = here['boxes'].copy()
         gt_categories = here['categories'].copy()
         proposals = here['proposals'].copy()
+        prop_scores = here['prop_scores'].copy()
         id = here['id']
-        return im, gt_boxes, gt_categories, proposals, id, loader_index
+        return im, gt_boxes, gt_categories, proposals, prop_scores, id, loader_index
 
     def __len__(self):
         tot_len = 0

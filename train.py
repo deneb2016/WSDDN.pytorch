@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument('--save_dir', help='directory to save models', default="../repo/wsddn")
     parser.add_argument('--data_dir', help='directory to load data', default='./data', type=str)
     parser.add_argument('--prop_method', help='ss or eb', default='eb', type=str)
+    parser.add_argument('--use_prop_score', action='store_true')
 
     parser.add_argument('--lr', help='starting learning rate', default=0.00001, type=float)
     parser.add_argument('--s', dest='session', help='training session', default=1, type=int)
@@ -122,7 +123,7 @@ def train():
         rand_perm = np.random.permutation(len(train_dataset))
         for step in range(1, len(train_dataset) + 1):
             index = rand_perm[step - 1]
-            im_data, gt_boxes, box_labels, proposals, image_level_label, im_scale, raw_img, im_id = train_dataset[index]
+            im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale, raw_img, im_id = train_dataset[index]
 
             # plt.imshow(raw_img)
             # draw_box(proposals / im_scale)
@@ -133,12 +134,16 @@ def train():
             rois = proposals.to(device)
             image_level_label = image_level_label.to(device)
 
-            scores, loss, reg = model(im_data, rois, image_level_label)
-
+            if args.use_prop_score:
+                prop_scores = prop_scores.to(device)
+            else:
+                prop_scores = None
+            scores, loss, reg = model(im_data, rois, prop_scores, image_level_label)
+            reg = reg * 0.0001
             num_prop += proposals.size(0)
             loss_sum += loss.item()
             reg_sum += reg.item()
-            loss = loss + reg * 0.0001
+            loss = loss + reg
 
             optimizer.zero_grad()
             loss.backward()
@@ -150,9 +155,9 @@ def train():
             if step % args.disp_interval == 0:
                 end = time.time()
 
-                print("[net %s][session %d][epoch %2d][iter %4d] loss: %.4f, reg: %.6f, num_prop: %.1f, lr: %.2e, time: %.1f" %
+                print("[net %s][session %d][epoch %2d][iter %4d] loss: %.4f, reg: %.4f, num_prop: %.1f, lr: %.2e, time: %.1f" %
                       (args.net, args.session, epoch, step, loss_sum / iter_sum,  reg_sum / iter_sum, num_prop / iter_sum, lr,  end - start))
-                log_file.write("[net %s][session %d][epoch %2d][iter %4d] loss: %.4f, reg: %.6f, num_prop: %.1f, lr: %.2e, time: %.1f\n" %
+                log_file.write("[net %s][session %d][epoch %2d][iter %4d] loss: %.4f, reg: %.4f, num_prop: %.1f, lr: %.2e, time: %.1f\n" %
                                (args.net, args.session, epoch, step, loss_sum / iter_sum, reg_sum / iter_sum, num_prop / iter_sum, lr,  end - start))
                 loss_sum = 0
                 reg_sum = 0
@@ -162,8 +167,8 @@ def train():
 
         log_file.flush()
         if epoch == 10:
-            adjust_learning_rate(optimizer, args.lr_decay_gamma)
-            lr *= args.lr_decay_gamma
+            adjust_learning_rate(optimizer, 0.1)
+            lr *= 0.1
 
         if epoch % args.save_interval == 0:
             save_name = os.path.join(output_dir, '{}_{}_{}.pth'.format(args.net, args.session, epoch))
