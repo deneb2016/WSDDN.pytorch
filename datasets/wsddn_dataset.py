@@ -8,16 +8,16 @@ from datasets.voc_loader import VOCLoader
 
 
 class WSDDNDataset(data.Dataset):
-    def __init__(self, dataset_names, data_dir, prop_method, h_flip, multi_scale=True, num_classes=20):
+    def __init__(self, dataset_names, data_dir, prop_method, h_flip, multi_scale=True, num_classes=20, min_prop_scale=20):
         self.h_flip = h_flip
         self.multi_scale = multi_scale
         self._dataset_loaders = []
         self.num_classes = num_classes
         for name in dataset_names:
             if name == 'voc07_trainval':
-                self._dataset_loaders.append(VOCLoader(data_dir, prop_method, '2007', 'trainval'))
+                self._dataset_loaders.append(VOCLoader(data_dir, prop_method, min_prop_scale, '2007', 'trainval'))
             elif name == 'voc07_test':
-                self._dataset_loaders.append(VOCLoader(data_dir, prop_method, '2007', 'test'))
+                self._dataset_loaders.append(VOCLoader(data_dir, prop_method, min_prop_scale, '2007', 'test'))
             else:
                 raise Exception('Undefined dataset %s' % name)
 

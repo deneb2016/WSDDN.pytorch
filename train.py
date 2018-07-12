@@ -22,11 +22,12 @@ def parse_args():
     parser.add_argument('--save_interval', dest='save_interval', help='number of epochs to save', default=1, type=int)
     parser.add_argument('--nw', help='number of worker to load data', default=0, type=int)
     parser.add_argument('--multiscale', action='store_true')
-    parser.add_argument('--no_dropout', action='store_true')
     parser.add_argument('--save_dir', help='directory to save models', default="../repo/wsddn")
     parser.add_argument('--data_dir', help='directory to load data', default='./data', type=str)
+
     parser.add_argument('--prop_method', help='ss or eb', default='eb', type=str)
     parser.add_argument('--use_prop_score', action='store_true')
+    parser.add_argument('--min_prop', help='minimum proposal box size', default=20, type=int)
 
     parser.add_argument('--lr', help='starting learning rate', default=0.00001, type=float)
     parser.add_argument('--s', dest='session', help='training session', default=1, type=int)
@@ -70,8 +71,8 @@ def train():
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    train_dataset = WSDDNDataset(dataset_names=['voc07_trainval'], data_dir=args.data_dir,
-                                 prop_method=args.prop_method, h_flip=True, multi_scale=args.multiscale)
+    train_dataset = WSDDNDataset(dataset_names=['voc07_trainval'], data_dir=args.data_dir, prop_method=args.prop_method,
+                                 h_flip=True, multi_scale=args.multiscale, min_prop_scale=args.min_prop)
 
     lr = args.lr
 
