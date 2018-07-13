@@ -57,6 +57,7 @@ class WSDDN_VGG16(nn.Module):
         det = F.softmax(fc8d, dim=0)
 
         scores = cls * det
+        scores = torch.clamp(scores, min=0, max=1)
 
         if image_level_label is None:
             return scores
