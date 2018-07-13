@@ -27,6 +27,7 @@ def parse_args():
     parser.add_argument('--prop_method', help='ss or eb', default='eb', type=str)
     parser.add_argument('--use_prop_score', action='store_true')
     parser.add_argument('--min_prop', help='minimum proposal box size', default=20, type=int)
+    parser.add_argument('--alpha', help='alpha for spatial regularization', default=0.0001, type=float)
 
     parser.add_argument('--lr', help='starting learning rate', default=0.00001, type=float)
     parser.add_argument('--s', dest='session', help='training session', default=1, type=int)
@@ -139,7 +140,7 @@ def train():
             else:
                 prop_scores = None
             scores, loss, reg = model(im_data, rois, prop_scores, image_level_label)
-            reg = reg * 0.0001
+            reg = reg * args.alpha
             num_prop += proposals.size(0)
             loss_sum += loss.item()
             reg_sum += reg.item()
