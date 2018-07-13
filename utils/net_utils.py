@@ -1,14 +1,13 @@
 import torch
 import numpy as np
-import torchvision.models as models
 
 
 def clip_gradient(model, clip_norm):
     totalnorm = 0
     for p in model.parameters():
         if p.requires_grad and p.grad is not None:
-            modulenorm = p.grad.data.norm()
-            totalnorm += modulenorm ** 2
+            modulenorm = p.grad.data.norm().item()
+            totalnorm = totalnorm + modulenorm ** 2
     totalnorm = np.sqrt(totalnorm)
 
     norm = clip_norm / max(totalnorm, clip_norm)
