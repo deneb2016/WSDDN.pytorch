@@ -12,10 +12,9 @@ def clip_gradient(model, clip_norm):
     totalnorm = np.sqrt(totalnorm)
 
     norm = clip_norm / max(totalnorm, clip_norm)
-    for model in models:
-        for p in model.parameters():
-            if p.requires_grad and p.grad is not None:
-                p.grad.mul_(norm)
+    for p in model.parameters():
+        if p.requires_grad and p.grad is not None:
+            p.grad.mul_(norm)
 
 
 def adjust_learning_rate(optimizer, decay=0.1):
