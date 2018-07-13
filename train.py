@@ -148,7 +148,7 @@ def train():
 
             optimizer.zero_grad()
             loss.backward()
-            clip_gradient(model, 10.0)
+            #clip_gradient(model, 10.0)
 
             optimizer.step()
             iter_sum += 1
