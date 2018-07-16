@@ -1,3 +1,9 @@
+# --------------------------------------------------------
+# PyTorch WSDDN
+# Licensed under The MIT License [see LICENSE for details]
+# Written by Seungkwan Lee
+# Some parts of this implementation are based on code from Ross Girshick, Jiasen Lu, and Jianwei Yang
+# --------------------------------------------------------
 import torch.utils.data as data
 import torch
 
@@ -8,9 +14,7 @@ from datasets.voc_loader import VOCLoader
 
 
 class WSDDNDataset(data.Dataset):
-    def __init__(self, dataset_names, data_dir, prop_method, h_flip, multi_scale=True, num_classes=20, min_prop_scale=20):
-        self.h_flip = h_flip
-        self.multi_scale = multi_scale
+    def __init__(self, dataset_names, data_dir, prop_method, num_classes=20, min_prop_scale=20):
         self._dataset_loaders = []
         self.num_classes = num_classes
         for name in dataset_names:
@@ -21,15 +25,15 @@ class WSDDNDataset(data.Dataset):
             else:
                 raise Exception('Undefined dataset %s' % name)
 
-    def __getitem__(self, index):
+    def get_data(self, index, h_flip=False, target_im_size=600):
         im, gt_boxes, gt_categories, proposals, prop_scores, id, loader_index = self.get_raw_data(index)
         raw_img = im.copy()
 
         # rgb -> bgr
         im = im[:, :, ::-1]
 
-        # random flip
-        if self.h_flip and np.random.rand() > 0.5:
+        # horizontal flip
+        if h_flip:
             im = im[:, ::-1, :]
             raw_img = raw_img[:, ::-1, :].copy()
 
@@ -52,12 +56,9 @@ class WSDDNDataset(data.Dataset):
         im_size_min = np.min(im_shape[0:2])
         im_size_max = np.max(im_shape[0:2])
 
-        if self.multi_scale:
-            im_scale = np.random.choice([480, 576, 688, 864, 1200]) / float(im_size_min)
-            if im_size_max * im_scale > 2000:
-                im_scale = 2000 / im_size_max
-        else:
-            im_scale = 600 / float(im_size_min)
+        im_scale = target_im_size / float(im_size_min)
+        if im_size_max * im_scale > 2000:
+            im_scale = 2000 / im_size_max
         im = cv2.resize(im, None, None, fx=im_scale, fy=im_scale, interpolation=cv2.INTER_LINEAR)
 
         gt_boxes = gt_boxes * im_scale

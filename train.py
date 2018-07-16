@@ -1,3 +1,9 @@
+# --------------------------------------------------------
+# PyTorch WSDDN
+# Licensed under The MIT License [see LICENSE for details]
+# Written by Seungkwan Lee
+# Some parts of this implementation are based on code from Ross Girshick, Jiasen Lu, Jianwei Yang
+# --------------------------------------------------------
 import os
 import numpy as np
 import argparse
@@ -19,8 +25,7 @@ def parse_args():
     parser.add_argument('--start_epoch', help='starting epoch', default=1, type=int)
     parser.add_argument('--epochs', dest='max_epochs', help='number of epochs', default=20, type=int)
     parser.add_argument('--disp_interval', help='number of iterations to display loss', default=1000, type=int)
-    parser.add_argument('--save_interval', dest='save_interval', help='number of epochs to save', default=1, type=int)
-    parser.add_argument('--multiscale', action='store_true')
+    parser.add_argument('--save_interval', dest='save_interval', help='number of epochs to save', default=5, type=int)
     parser.add_argument('--save_dir', help='directory to save models', default="../repo/wsddn")
     parser.add_argument('--data_dir', help='directory to load data', default='./data', type=str)
 
@@ -34,9 +39,8 @@ def parse_args():
 
     # resume trained model
     parser.add_argument('--r', dest='resume', help='resume checkpoint or not', action='store_true')
-    parser.add_argument('--checksession', dest='checksession', help='checksession to load model', default=1, type=int)
-    parser.add_argument('--checkepoch', dest='checkepoch', help='checkepoch to load model', default=1, type=int)
-    parser.add_argument('--not_load_optim', dest='no_optim', action='store_true')
+    parser.add_argument('--checksession', dest='checksession', help='checksession to load model', default=0, type=int)
+    parser.add_argument('--checkepoch', dest='checkepoch', help='checkepoch to load model', default=0, type=int)
 
     args = parser.parse_args()
     return args
@@ -72,7 +76,7 @@ def train():
         os.makedirs(output_dir)
 
     train_dataset = WSDDNDataset(dataset_names=['voc07_trainval'], data_dir=args.data_dir, prop_method=args.prop_method,
-                                 h_flip=True, multi_scale=args.multiscale, min_prop_scale=args.min_prop)
+                                 num_classes=20, min_prop_scale=args.min_prop)
 
     lr = args.lr
 
@@ -124,7 +128,10 @@ def train():
         rand_perm = np.random.permutation(len(train_dataset))
         for step in range(1, len(train_dataset) + 1):
             index = rand_perm[step - 1]
-            im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale, raw_img, im_id = train_dataset[index]
+            apply_h_flip = np.random.rand() > 0.5
+            target_im_size = np.random.choice([480, 576, 688, 864, 1200])
+            im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale, raw_img, im_id = \
+                train_dataset.get_data(index, apply_h_flip, target_im_size)
 
             # plt.imshow(raw_img)
             # draw_box(proposals / im_scale)

@@ -1,3 +1,9 @@
+# --------------------------------------------------------
+# PyTorch WSDDN
+# Licensed under The MIT License [see LICENSE for details]
+# Written by Seungkwan Lee
+# Some parts of this implementation are based on code from Ross Girshick, Jiasen Lu, and Jianwei Yang
+# --------------------------------------------------------
 import torch.nn as nn
 import torch.nn.functional as F
 import torch
@@ -51,20 +57,21 @@ class WSDDN_VGG16(nn.Module):
 
         fc7 = self.top(pooled_feat)
         fc8c = self.fc8c(fc7)
-        fc8d = self.fc8d(fc7)
+        fc8d = self.fc8d(fc7) / 2
 
         cls = F.softmax(fc8c, dim=1)
         det = F.softmax(fc8d, dim=0)
 
         scores = cls * det
-        scores = torch.clamp(scores, min=0, max=1)
 
         if image_level_label is None:
             return scores
 
         image_level_scores = torch.sum(scores, 0)
+
+        # To avoid numerical error
         image_level_scores = torch.clamp(image_level_scores, min=0, max=1)
-        #print(image_level_scores, image_level_label)
+
         loss = F.binary_cross_entropy(image_level_scores, image_level_label.to(torch.float32))
         reg = self.spatial_regulariser(rois, fc7, scores, image_level_label)
 
