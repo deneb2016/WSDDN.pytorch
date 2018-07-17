@@ -11,7 +11,7 @@ import os
 from frcnn_eval.imdb import imdb
 import numpy as np
 from frcnn_eval.voc_eval import voc_eval
-
+import uuid
 
 class voc_eval_kit(imdb):
     def __init__(self, image_set, year, devkit_path):
@@ -28,6 +28,8 @@ class voc_eval_kit(imdb):
         self._class_to_ind = dict(zip(self.classes, range(self.num_classes)))
         self._image_ext = '.jpg'
         self._image_index = self._load_image_set_index()
+        self._salt = str(uuid.uuid4())
+
 
         assert os.path.exists(self._devkit_path), 'VOCdevkit path does not exist: {}'.format(self._devkit_path)
         assert os.path.exists(self._data_path), 'Path does not exist: {}'.format(self._data_path)
@@ -48,7 +50,7 @@ class voc_eval_kit(imdb):
 
     def _get_voc_results_file_template(self):
         # VOCdevkit/results/VOC2007/Main/<comp_id>_det_test_aeroplane.txt
-        filename = 'det_' + self._image_set + '_{:s}.txt'
+        filename = 'det_' + self._image_set + '_' + self._salt + '_{:s}.txt'
         path = os.path.join(
             self._devkit_path,
             'results',

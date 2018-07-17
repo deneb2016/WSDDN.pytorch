@@ -228,7 +228,7 @@ def my_eval():
             prop_scores = None
         scores = model(im_data, rois, prop_scores, None)
 
-        sorted_scores, sorted_indices = torch.sort(scores.detach(), dim=0, descending=True)
+        sorted_scores, sorted_indices = torch.sort(scores.detach() * 100, dim=0, descending=True)
         sorted_boxes = rois[sorted_indices.permute(1, 0)] / im_scale
 
         for cls in range(20):
@@ -277,5 +277,5 @@ def eval_saved_result():
 
 
 if __name__ == '__main__':
-    #my_eval()
-    eval_saved_result()
+    my_eval()
+    #eval_saved_result()

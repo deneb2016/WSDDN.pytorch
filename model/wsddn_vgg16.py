@@ -72,7 +72,7 @@ class WSDDN_VGG16(nn.Module):
         # To avoid numerical error
         image_level_scores = torch.clamp(image_level_scores, min=0, max=1)
 
-        loss = F.binary_cross_entropy(image_level_scores, image_level_label.to(torch.float32))
+        loss = F.binary_cross_entropy(image_level_scores, image_level_label.to(torch.float32), size_average=False)
         reg = self.spatial_regulariser(rois, fc7, scores, image_level_label)
 
         return scores, loss, reg
