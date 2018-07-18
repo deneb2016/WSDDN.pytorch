@@ -100,24 +100,46 @@ class WSDDN_VGG16(nn.Module):
     #         C = C + 1
     #     return ret / C
 
+    # def spatial_regulariser(self, rois, fc7, scores, image_level_label):
+    #     N = rois.size(0)
+    #     ret = 0
+    #     for cls in range(self.num_classes):
+    #         if image_level_label[cls].item() == 0:
+    #             continue
+    #
+    #         max_score, max_score_index = torch.max(scores[:, cls], 0)
+    #         max_score_box = rois[max_score_index]
+    #         max_feature = fc7[max_score_index]
+    #
+    #         iou = all_pair_iou(max_score_box.view(1, 4), rois).view(N)
+    #         adjacent_indices = iou.gt(0.6).nonzero().squeeze()
+    #         adjacent_features = fc7[adjacent_indices]
+    #
+    #         diff = adjacent_features - max_feature
+    #         diff = diff * max_score
+    #
+    #         ret = torch.sum(diff * diff) * 0.5 + ret
+    #
+    #     return ret
+
     def spatial_regulariser(self, rois, fc7, scores, image_level_label):
+        K = 10
+        th = 0.6
         N = rois.size(0)
         ret = 0
         for cls in range(self.num_classes):
             if image_level_label[cls].item() == 0:
                 continue
 
-            max_score, max_score_index = torch.max(scores[:, cls], 0)
-            max_score_box = rois[max_score_index]
-            max_feature = fc7[max_score_index]
+            topk_scores, topk_indices = scores[:, cls].topk(K, dim=0)
+            topk_boxes = rois[topk_indices]
+            topk_featres = fc7[topk_indices]
 
-            iou = all_pair_iou(max_score_box.view(1, 4), rois).view(N)
-            adjacent_indices = iou.gt(0.6).nonzero().squeeze()
-            adjacent_features = fc7[adjacent_indices]
+            mask = all_pair_iou(topk_boxes[0:1, :], topk_boxes).view(K).gt(th).float()
 
-            diff = adjacent_features - max_feature
-            diff = diff * max_score
+            diff = topk_featres - topk_featres[0]
+            diff = diff * topk_scores.detach().view(K, 1)
 
-            ret = torch.sum(diff * diff) * 0.5 + ret
+            ret = (torch.pow(diff, 2).sum(1) * mask).sum() * 0.5 + ret
 
         return ret

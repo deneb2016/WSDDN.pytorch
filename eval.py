@@ -115,7 +115,7 @@ def eval():
             prop_scores = prop_scores.to(device)
         else:
             prop_scores = None
-        scores = model(im_data, rois, prop_scores, None).detach().cpu().numpy()
+        scores = model(im_data, rois, prop_scores, None).detach().cpu().numpy() * 100
         # print(scores.max())
         # print(np.sum(scores, axis=0))
         # print(np.argmax(np.sum(scores, axis=0)))
@@ -174,7 +174,7 @@ def eval():
             dets = all_boxes[cls][index]
             if dets == []:
                 continue
-            keep = py_cpu_nms(dets, 0.4)
+            keep = nms(dets, 0.4)
             all_boxes[cls][index] = dets[keep, :].copy()
     print('NMS complete, elapsed time: %.1f', time.time() - start)
 
@@ -228,7 +228,7 @@ def my_eval():
             prop_scores = None
         scores = model(im_data, rois, prop_scores, None)
 
-        sorted_scores, sorted_indices = torch.sort(scores.detach() * 100, dim=0, descending=True)
+        sorted_scores, sorted_indices = torch.sort(scores.detach(), dim=0, descending=True)
         sorted_boxes = rois[sorted_indices.permute(1, 0)] / im_scale
 
         for cls in range(20):
@@ -277,5 +277,5 @@ def eval_saved_result():
 
 
 if __name__ == '__main__':
-    my_eval()
+    eval()
     #eval_saved_result()
