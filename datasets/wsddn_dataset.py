@@ -25,7 +25,7 @@ class WSDDNDataset(data.Dataset):
             else:
                 raise Exception('Undefined dataset %s' % name)
 
-    def get_data(self, index, h_flip=False, target_im_size=600):
+    def get_data(self, index, h_flip=False, target_im_size=688):
         im, gt_boxes, gt_categories, proposals, prop_scores, id, loader_index = self.get_raw_data(index)
         raw_img = im.copy()
 
@@ -76,6 +76,22 @@ class WSDDNDataset(data.Dataset):
         for label in gt_categories:
             image_level_label[label] = 1
         return data, gt_boxes, gt_categories, proposals, prop_scores, image_level_label, im_scale, raw_img, id
+
+    def get_raw_proposal(self, index):
+        here = None
+        loader_index = 0
+
+        # select proper data loader by index
+        for loader in self._dataset_loaders:
+            if index < len(loader):
+                here = loader.items[index]
+                break
+            else:
+                index -= len(loader)
+                loader_index += 1
+
+        proposals = here['proposals'].copy()
+        return proposals
 
     def get_raw_data(self, index):
         here = None

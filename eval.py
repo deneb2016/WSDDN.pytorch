@@ -19,7 +19,7 @@ import math
 import pickle
 from utils.cpu_nms import cpu_nms as nms
 import heapq
-
+import itertools
 from frcnn_eval.pascal_voc import voc_eval_kit
 
 def parse_args():
@@ -29,6 +29,8 @@ def parse_args():
 
     parser.add_argument('--prop_method', help='ss or eb', default='eb', type=str)
     parser.add_argument('--use_prop_score', action='store_true')
+    parser.add_argument('--multiscale', action='store_true')
+
     parser.add_argument('--min_prop', help='minimum proposal box size', default=20, type=int)
     parser.add_argument('--model_name', default='WSDDN_VGG16_1_20', type=str)
 
@@ -100,26 +102,26 @@ def eval():
     all_boxes = [[[] for _ in range(num_images)] for _ in range(20)]
 
     for index in range(len(test_dataset)):
-        im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale, raw_img, im_id = test_dataset.get_data(index, False, 688)
-
-        #print(image_level_label)
-        #plt.imshow(raw_img)
-        # draw_box(proposals / im_scale)
-        # draw_box(gt_boxes / im_scale, 'black')
-        #plt.show()
-
-        im_data = im_data.unsqueeze(0).to(device)
-        rois = proposals.to(device)
-
-        if args.use_prop_score:
-            prop_scores = prop_scores.to(device)
+        scores = 0
+        if args.multiscale:
+            comb = itertools.product([False, True], [480, 576, 688, 864, 1200])
         else:
-            prop_scores = None
-        scores = model(im_data, rois, prop_scores, None).detach().cpu().numpy() * 100
-        # print(scores.max())
-        # print(np.sum(scores, axis=0))
-        # print(np.argmax(np.sum(scores, axis=0)))
-        boxes = proposals.numpy() / im_scale
+            comb = itertools.product([False], [688])
+        for h_flip, im_size in comb:
+            im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale_ratio, raw_img, im_id = test_dataset.get_data(index, h_flip, im_size)
+
+            im_data = im_data.unsqueeze(0).to(device)
+            rois = proposals.to(device)
+
+            if args.use_prop_score:
+                prop_scores = prop_scores.to(device)
+            else:
+                prop_scores = None
+            local_scores = model(im_data, rois, prop_scores, None).detach().cpu().numpy()
+            scores = scores + local_scores
+
+        scores = scores * 100
+        boxes = test_dataset.get_raw_proposal(index)
 
         for cls in range(20):
             inds = np.where((scores[:, cls] > thresh[cls]))[0]
@@ -216,7 +218,7 @@ def my_eval():
     all_boxes = [[[] for _ in range(len(test_dataset))] for _ in range(20)]
 
     for index in range(len(test_dataset)):
-        im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale, raw_img, im_id = test_dataset.get_data(
+        im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale_ratio, raw_img, im_id = test_dataset.get_data(
             index, False, 688)
 
         im_data = im_data.unsqueeze(0).to(device)
@@ -229,7 +231,7 @@ def my_eval():
         scores = model(im_data, rois, prop_scores, None)
 
         sorted_scores, sorted_indices = torch.sort(scores.detach(), dim=0, descending=True)
-        sorted_boxes = rois[sorted_indices.permute(1, 0)] / im_scale
+        sorted_boxes = rois[sorted_indices.permute(1, 0)] / im_scale_ratio
 
         for cls in range(20):
             here = torch.cat((sorted_boxes[cls], sorted_scores[:, cls:cls + 1]), 1).cpu()
