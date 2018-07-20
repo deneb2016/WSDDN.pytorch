@@ -50,12 +50,10 @@ class WSDDN_VGG16(nn.Module):
         rois = rois.clone()
         o0 = 8.5
         o1 = 9.5
-        a = 1
-        rois[:, 0] = torch.floor((rois[:, 0] - o0 + o1) / 16 + 0.5) + a
-        rois[:, 1] = torch.floor((rois[:, 1] - o0 + o1) / 16 + 0.5) + a
-        rois[:, 2] = torch.floor((rois[:, 2] - o0 - o1) / 16 - 0.5) + a
-        rois[:, 3] = torch.floor((rois[:, 3] - o0 - o1) / 16 - 0.5) + a
-        rois = rois * 16
+        rois[:, 0] = torch.floor((rois[:, 0] - o0 + o1) / 16 + 0.5)
+        rois[:, 1] = torch.floor((rois[:, 1] - o0 + o1) / 16 + 0.5)
+        rois[:, 2] = torch.floor((rois[:, 2] - o0 - o1) / 16 - 0.5)
+        rois[:, 3] = torch.floor((rois[:, 3] - o0 - o1) / 16 - 0.5)
         return rois
 
     def forward(self, im_data, rois, prop_scores=None, image_level_label=None):
