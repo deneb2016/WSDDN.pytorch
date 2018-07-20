@@ -45,7 +45,7 @@ class WSDDN_VGG16(nn.Module):
 
         normal_init(self.fc8c, 0, 0.01, False)
         normal_init(self.fc8d, 0, 0.01, False)
-
+    
     def forward(self, im_data, rois, prop_scores=None, image_level_label=None):
         N = rois.size(0)
         feature_map = self.base(im_data)

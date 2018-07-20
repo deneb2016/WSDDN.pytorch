@@ -117,4 +117,4 @@ class voc_eval_kit(imdb):
         self._do_python_eval()
         for cls in self._classes:
             filename = self._get_voc_results_file_template().format(cls)
-            os.remove(filename)
+#            os.remove(filename)

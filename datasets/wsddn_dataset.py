@@ -25,7 +25,7 @@ class WSDDNDataset(data.Dataset):
             else:
                 raise Exception('Undefined dataset %s' % name)
 
-    def get_data(self, index, h_flip=False, target_im_size=688):
+    def get_data(self, index, h_flip=False, target_im_size=688, min_resize=False):
         im, gt_boxes, gt_categories, proposals, prop_scores, id, loader_index = self.get_raw_data(index)
         raw_img = im.copy()
 
@@ -56,7 +56,11 @@ class WSDDNDataset(data.Dataset):
         im_size_min = np.min(im_shape[0:2])
         im_size_max = np.max(im_shape[0:2])
 
-        im_scale = target_im_size / float(im_size_min)
+        if min_resize:
+            im_scale = target_im_size / float(im_size_min)
+        else:
+            im_scale = target_im_size / float(im_size_max)
+
         if im_size_max * im_scale > 2000:
             im_scale = 2000 / im_size_max
         im = cv2.resize(im, None, None, fx=im_scale, fy=im_scale, interpolation=cv2.INTER_LINEAR)

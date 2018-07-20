@@ -30,6 +30,7 @@ def parse_args():
     parser.add_argument('--prop_method', help='ss or eb', default='eb', type=str)
     parser.add_argument('--use_prop_score', action='store_true')
     parser.add_argument('--multiscale', action='store_true')
+    parser.add_argument('--min_resize', action='store_true')
 
     parser.add_argument('--min_prop', help='minimum proposal box size', default=20, type=int)
     parser.add_argument('--model_name', default='WSDDN_VGG16_1_20', type=str)
@@ -108,7 +109,7 @@ def eval():
         else:
             comb = itertools.product([False], [688])
         for h_flip, im_size in comb:
-            im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale_ratio, raw_img, im_id = test_dataset.get_data(index, h_flip, im_size)
+            im_data, gt_boxes, box_labels, proposals, prop_scores, image_level_label, im_scale_ratio, raw_img, im_id = test_dataset.get_data(index, h_flip, im_size, args.min_resize)
 
             im_data = im_data.unsqueeze(0).to(device)
             rois = proposals.to(device)
@@ -120,7 +121,7 @@ def eval():
             local_scores = model(im_data, rois, prop_scores, None).detach().cpu().numpy()
             scores = scores + local_scores
 
-        scores = scores * 100
+        scores = scores * 1000
         boxes = test_dataset.get_raw_proposal(index)
 
         for cls in range(20):
