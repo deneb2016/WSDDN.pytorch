@@ -45,8 +45,19 @@ class WSDDN_VGG16(nn.Module):
 
         normal_init(self.fc8c, 0, 0.01, False)
         normal_init(self.fc8d, 0, 0.01, False)
-    
+
+    def adjust_roi_offset(self, rois):
+        o0 = 8.5
+        o1 = 9.5
+        rois[:, 0] = torch.floor((rois[:, 0] - o0 + o1) / 16 + 0.5)
+        rois[:, 1] = torch.floor((rois[:, 1] - o0 + o1) / 16 + 0.5)
+        rois[:, 2] = torch.floor((rois[:, 2] - o0 - o1) / 16 - 0.5)
+        rois[:, 3] = torch.floor((rois[:, 3] - o0 - o1) / 16 - 0.5)
+        rois = rois * 16
+        return rois
+
     def forward(self, im_data, rois, prop_scores=None, image_level_label=None):
+        rois = self.adjust_roi_offset(rois)
         N = rois.size(0)
         feature_map = self.base(im_data)
         zero_padded_rois = torch.cat([torch.zeros(N, 1).to(rois), rois], 1)
