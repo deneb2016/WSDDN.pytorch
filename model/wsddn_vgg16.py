@@ -30,8 +30,8 @@ class WSDDN_VGG16(nn.Module):
 
         self.fc8c = nn.Linear(4096, self.num_classes)
         self.fc8d = nn.Linear(4096, self.num_classes)
-        self.roi_pooling = _RoIPooling(7, 7, 1.0/16.0)
-        self.roi_align = RoIAlignAvg(7, 7, 1.0/16.0)
+        self.roi_pooling = _RoIPooling(7, 7, 1.0)
+        self.roi_align = RoIAlignAvg(7, 7, 1.0)
         self.num_classes = self.num_classes
         self._init_weights()
 
@@ -47,12 +47,14 @@ class WSDDN_VGG16(nn.Module):
         normal_init(self.fc8d, 0, 0.01, False)
 
     def adjust_roi_offset(self, rois):
+        rois = rois.clone()
         o0 = 8.5
         o1 = 9.5
-        rois[:, 0] = torch.floor((rois[:, 0] - o0 + o1) / 16 + 0.5)
-        rois[:, 1] = torch.floor((rois[:, 1] - o0 + o1) / 16 + 0.5)
-        rois[:, 2] = torch.floor((rois[:, 2] - o0 - o1) / 16 - 0.5)
-        rois[:, 3] = torch.floor((rois[:, 3] - o0 - o1) / 16 - 0.5)
+        a = 1
+        rois[:, 0] = torch.floor((rois[:, 0] - o0 + o1) / 16 + 0.5) + a
+        rois[:, 1] = torch.floor((rois[:, 1] - o0 + o1) / 16 + 0.5) + a
+        rois[:, 2] = torch.floor((rois[:, 2] - o0 - o1) / 16 - 0.5) + a
+        rois[:, 3] = torch.floor((rois[:, 3] - o0 - o1) / 16 - 0.5) + a
         rois = rois * 16
         return rois
 
