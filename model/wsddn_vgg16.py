@@ -30,8 +30,8 @@ class WSDDN_VGG16(nn.Module):
 
         self.fc8c = nn.Linear(4096, self.num_classes)
         self.fc8d = nn.Linear(4096, self.num_classes)
-        self.roi_pooling = _RoIPooling(7, 7, 1.0)
-        self.roi_align = RoIAlignAvg(7, 7, 1.0)
+        self.roi_pooling = _RoIPooling(7, 7, 1.0 / 16.0)
+        self.roi_align = RoIAlignAvg(7, 7, 1.0 / 16.0)
         self.num_classes = self.num_classes
         self._init_weights()
 
