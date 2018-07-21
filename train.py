@@ -37,6 +37,7 @@ def parse_args():
     parser.add_argument('--lr', help='starting learning rate', default=0.00001, type=float)
     parser.add_argument('--s', dest='session', help='training session', default=1, type=int)
     parser.add_argument('--bs', help='training batch size', default=1, type=int)
+    parser.add_argument('--bavg', help='batch average', action='store_true')
 
     # resume trained model
     parser.add_argument('--r', dest='resume', help='resume checkpoint or not', action='store_true')
@@ -154,7 +155,8 @@ def train():
             loss_sum += loss.item()
             reg_sum += reg.item()
             loss = loss + reg
-
+            if args.bavg:
+                loss = loss / args.bs
             loss.backward()
 
             if step % args.bs == 0:
