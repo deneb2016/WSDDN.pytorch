@@ -36,6 +36,7 @@ def parse_args():
 
     parser.add_argument('--lr', help='starting learning rate', default=0.00001, type=float)
     parser.add_argument('--s', dest='session', help='training session', default=1, type=int)
+    parser.add_argument('--bs', help='training batch size', default=1, type=int)
 
     # resume trained model
     parser.add_argument('--r', dest='resume', help='resume checkpoint or not', action='store_true')
@@ -125,6 +126,7 @@ def train():
         num_prop = 0
         start = time.time()
 
+        optimizer.zero_grad()
         rand_perm = np.random.permutation(len(train_dataset))
         for step in range(1, len(train_dataset) + 1):
             index = rand_perm[step - 1]
@@ -153,11 +155,11 @@ def train():
             reg_sum += reg.item()
             loss = loss + reg
 
-            optimizer.zero_grad()
             loss.backward()
-            #clip_gradient(model, 10.0)
 
-            optimizer.step()
+            if step % args.bs == 0:
+                optimizer.step()
+                optimizer.zero_grad()
             iter_sum += 1
 
             if step % args.disp_interval == 0:
