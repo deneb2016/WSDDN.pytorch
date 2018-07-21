@@ -57,7 +57,7 @@ class WSDDN_VGG16(nn.Module):
         return rois
 
     def forward(self, im_data, rois, prop_scores=None, image_level_label=None):
-        rois = self.adjust_roi_offset(rois)
+        #rois = self.adjust_roi_offset(rois)
         N = rois.size(0)
         feature_map = self.base(im_data)
         zero_padded_rois = torch.cat([torch.zeros(N, 1).to(rois), rois], 1)

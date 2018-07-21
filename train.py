@@ -90,7 +90,7 @@ def train():
     for key, value in dict(model.named_parameters()).items():
         if value.requires_grad:
             if 'bias' in key:
-                params += [{'params': [value], 'lr': lr, 'weight_decay': 0}]
+                params += [{'params': [value], 'lr': lr  , 'weight_decay': 0}]
             else:
                 params += [{'params': [value], 'lr': lr, 'weight_decay': 0.0005}]
 
