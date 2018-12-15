@@ -59,7 +59,7 @@ def transform(boxes, transform_param):
     w = boxes[:, 2] * torch.exp(transform_param[:, 2])
     h = boxes[:, 3] * torch.exp(transform_param[:, 3])
 
-    return torch.stack([cx, cy, w, h])
+    return torch.stack([cx, cy, w, h], 1)
 
 
 def to_cwh_form(boxes):
@@ -72,7 +72,7 @@ def to_cwh_form(boxes):
     cy = (boxes[:, 1] + boxes[:, 3]) / 2
     w = boxes[:, 2] - boxes[:, 0] + 1
     h = boxes[:, 3] - boxes[:, 1] + 1
-    return torch.stack([cx, cy, w, h])
+    return torch.stack([cx, cy, w, h], 1)
 
 
 def to_minmax_form(boxes):
@@ -85,4 +85,4 @@ def to_minmax_form(boxes):
     ymin = boxes[:, 1] - boxes[:, 3] / 2 + 0.5
     xmax = boxes[:, 0] + boxes[:, 2] / 2 - 0.5
     ymax = boxes[:, 1] + boxes[:, 3] / 2 - 0.5
-    return torch.stack([xmin, ymin, xmax, ymax])
+    return torch.stack([xmin, ymin, xmax, ymax], 1)

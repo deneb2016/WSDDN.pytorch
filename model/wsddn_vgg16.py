@@ -72,7 +72,7 @@ class WSDDN_VGG16(nn.Module):
 
         cls = F.softmax(fc8c, dim=1)
         det = F.softmax(fc8d, dim=0)
-
+        #det = self.region_aware_softmax(rois, fc8d)
         scores = cls * det
 
         if image_level_label is None:
@@ -87,6 +87,43 @@ class WSDDN_VGG16(nn.Module):
         reg = self.spatial_regulariser(rois, fc7, scores, image_level_label)
 
         return scores, loss, reg
+
+    def region_aware_softmax(self, rois, det_score):
+        N = rois.size(0)
+        C = self.num_classes
+        cwh_form_rois = to_cwh_form(rois)
+        pair_wise_dx = cwh_form_rois[:, 0].view(1, -1) - cwh_form_rois[:, 0].view(-1, 1)
+        pair_wise_dy = cwh_form_rois[:, 1].view(1, -1) - cwh_form_rois[:, 1].view(-1, 1)
+
+        pair_wise_wsum = cwh_form_rois[:, 2].view(1, -1) + cwh_form_rois[:, 2].view(-1, 1)
+        pair_wise_hsum = cwh_form_rois[:, 3].view(1, -1) + cwh_form_rois[:, 3].view(-1, 1)
+
+        pair_wise_dx = pair_wise_dx / pair_wise_wsum
+        pair_wise_dy = pair_wise_dy / pair_wise_hsum
+
+        pair_wise_dist = torch.sqrt(pair_wise_dx * pair_wise_dx + pair_wise_dy * pair_wise_dy)
+        pair_wise_weight = torch.exp(-pair_wise_dist)
+
+        det_score = torch.exp(det_score)
+        output = []
+
+        for cls in range(self.num_classes):
+            weighted_det_sum = torch.sum(det_score[:, cls] * pair_wise_weight, 1)
+            here = det_score[:, cls] / weighted_det_sum
+            output.append(here)
+
+        output = torch.stack(output, 1)
+
+        if output.max() < 0.001:
+            det_score = torch.log(det_score)
+            print(det_score)
+            print(pair_wise_weight)
+            print(det_score.max(), det_score.min())
+            print(pair_wise_weight.max(), pair_wise_weight.min())
+            print(pair_wise_dist.max(), pair_wise_dist.min())
+
+        return output
+
 
     # def spatial_regulariser(self, rois, fc7, scores, image_level_label):
     #     N = rois.size(0)

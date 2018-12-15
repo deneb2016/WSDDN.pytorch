@@ -27,7 +27,7 @@ def parse_args():
     parser.add_argument('--disp_interval', help='number of iterations to display loss', default=1000, type=int)
     parser.add_argument('--save_interval', dest='save_interval', help='number of epochs to save', default=5, type=int)
     parser.add_argument('--save_dir', help='directory to save models', default="../repo/wsddn")
-    parser.add_argument('--data_dir', help='directory to load data', default='./data', type=str)
+    parser.add_argument('--data_dir', help='directory to load data', default='../data', type=str)
 
     parser.add_argument('--prop_method', help='ss or eb', default='eb', type=str)
     parser.add_argument('--use_prop_score', action='store_true')
@@ -92,7 +92,7 @@ def train():
     for key, value in dict(model.named_parameters()).items():
         if value.requires_grad:
             if 'bias' in key:
-                params += [{'params': [value], 'lr': lr  , 'weight_decay': 0}]
+                params += [{'params': [value], 'lr': lr * 2, 'weight_decay': 0}]
             else:
                 params += [{'params': [value], 'lr': lr, 'weight_decay': 0.0005}]
 
